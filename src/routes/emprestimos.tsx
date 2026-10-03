@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { getEmprestimos, addEmprestimo, addPagamento } from "@/lib/financeiro.functions";
 import { brl, formatData } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/emprestimos")({
+export const Route = createFileRoute("/emprestimos")({
   head: () => ({ meta: [{ title: "Empréstimos — Meu Controle Financeiro" }] }),
   component: Emprestimos,
 });
