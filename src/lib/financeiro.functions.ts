@@ -204,7 +204,7 @@ export const importSeedData = createServerFn({ method: "POST" })
     }
     const idMap = new Map<number, string>();
     for (const e of seed.emprestimos) {
-      const { orig_id, ...rest } = e as { orig_id: number } & Record<string, unknown>;
+      const { orig_id, ...rest } = e;
       const { data: inserted, error } = await supabase
         .from("emprestimos")
         .insert({ ...rest, user_id: userId })
@@ -214,13 +214,11 @@ export const importSeedData = createServerFn({ method: "POST" })
       idMap.set(orig_id, inserted.id as string);
     }
     for (const batch of chunk(seed.pagamentos, 200)) {
-      const rows = batch
-        .map((p) => {
-          const { emp_orig_id, ...rest } = p as { emp_orig_id: number } & Record<string, unknown>;
-          const empId = idMap.get(emp_orig_id);
-          return empId ? { ...rest, emprestimo_id: empId, user_id: userId } : null;
-        })
-        .filter(Boolean);
+      const rows = batch.flatMap((p) => {
+        const { emp_orig_id, ...rest } = p;
+        const empId = idMap.get(emp_orig_id);
+        return empId ? [{ ...rest, emprestimo_id: empId, user_id: userId }] : [];
+      });
       if (rows.length) {
         const { error } = await supabase.from("pagamentos").insert(rows);
         if (error) throw new Error(error.message);
