@@ -174,11 +174,15 @@ export const importSeedData = createServerFn({ method: "POST" })
       .select("id", { count: "exact", head: true });
     if (count && count > 0) return { imported: false };
 
-    const seed = (await import("./seed-data.json")).default as {
-      lancamentos: Array<Record<string, unknown>>;
-      gastos_fixos: Array<Record<string, unknown>>;
-      emprestimos: Array<Record<string, unknown>>;
-      pagamentos: Array<Record<string, unknown>>;
+    type SeedLanc = { data: string; tipo: "Receita" | "Despesa"; categoria: string; descricao: string; valor: number; plataforma: string; obs: string };
+    type SeedGasto = { data: string; categoria: string; valor: number; mes_ano: string };
+    type SeedEmp = { orig_id: number; descricao: string; credor: string; valor_original: number; total_pago: number; saldo_devedor: number };
+    type SeedPag = { data: string; emp_orig_id: number; valor: number; obs: string };
+    const seed = (await import("./seed-data.json")).default as unknown as {
+      lancamentos: SeedLanc[];
+      gastos_fixos: SeedGasto[];
+      emprestimos: SeedEmp[];
+      pagamentos: SeedPag[];
     };
 
     const chunk = <T,>(arr: T[], n: number) =>

@@ -8,7 +8,7 @@ export function resumoMensal(lancamentos: L[], gastos: G[], ano: string): Resumo
   const meses: ResumoMes[] = Array.from({ length: 12 }, (_, mes) => ({ mes, uber: 0, n99: 0, outros: 0, receita: 0, despesa: 0, fixos: 0 }));
   for (const l of lancamentos) {
     if (l.data.slice(0, 4) !== ano) continue;
-    const m = meses[Number(l.data.slice(5, 7)) - 1];
+    const m = meses[Number(l.data.slice(5, 7)) - 1]!;
     const v = Number(l.valor);
     if (l.tipo === "Receita") {
       m.receita += v;
@@ -19,7 +19,7 @@ export function resumoMensal(lancamentos: L[], gastos: G[], ano: string): Resumo
   }
   for (const g of gastos) {
     if (g.data.slice(0, 4) !== ano) continue;
-    meses[Number(g.data.slice(5, 7)) - 1].fixos += Number(g.valor);
+    meses[Number(g.data.slice(5, 7)) - 1]!.fixos += Number(g.valor);
   }
   return meses;
 }
