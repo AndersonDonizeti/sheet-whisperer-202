@@ -14,7 +14,146 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      emprestimos: {
+        Row: {
+          created_at: string | null
+          credor: string
+          descricao: string
+          id: string
+          saldo_devedor: number
+          total_pago: number | null
+          user_id: string
+          valor_original: number
+        }
+        Insert: {
+          created_at?: string | null
+          credor: string
+          descricao: string
+          id?: string
+          saldo_devedor: number
+          total_pago?: number | null
+          user_id: string
+          valor_original: number
+        }
+        Update: {
+          created_at?: string | null
+          credor?: string
+          descricao?: string
+          id?: string
+          saldo_devedor?: number
+          total_pago?: number | null
+          user_id?: string
+          valor_original?: number
+        }
+        Relationships: []
+      }
+      gastos_fixos: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          data: string
+          id: string
+          mes_ano: string | null
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria: string
+          created_at?: string | null
+          data: string
+          id?: string
+          mes_ano?: string | null
+          user_id: string
+          valor: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          data?: string
+          id?: string
+          mes_ano?: string | null
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      lancamentos: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          data: string
+          descricao: string | null
+          id: string
+          obs: string | null
+          plataforma: string | null
+          tipo: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria: string
+          created_at?: string | null
+          data: string
+          descricao?: string | null
+          id?: string
+          obs?: string | null
+          plataforma?: string | null
+          tipo: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          obs?: string | null
+          plataforma?: string | null
+          tipo?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      pagamentos: {
+        Row: {
+          created_at: string | null
+          data: string
+          emprestimo_id: string
+          id: string
+          obs: string | null
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string | null
+          data: string
+          emprestimo_id: string
+          id?: string
+          obs?: string | null
+          user_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string | null
+          data?: string
+          emprestimo_id?: string
+          id?: string
+          obs?: string | null
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_emprestimo_id_fkey"
+            columns: ["emprestimo_id"]
+            isOneToOne: false
+            referencedRelation: "emprestimos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
