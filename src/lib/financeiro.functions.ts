@@ -1,11 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+async function db() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
 
 export const getLancamentos = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+  .handler(async () => {
+    const supabase = await db();
+    const { data, error } = await supabase
       .from("lancamentos")
       .select("*")
       .order("data", { ascending: false });
@@ -14,7 +18,6 @@ export const getLancamentos = createServerFn({ method: "GET" })
   });
 
 export const addLancamento = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z
       .object({
@@ -28,19 +31,20 @@ export const addLancamento = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+  .handler(async ({ data }) => {
+    const supabase = await db();
+    const { error } = await supabase
       .from("lancamentos")
-      .insert({ ...data, user_id: context.userId });
+      .insert({ ...data });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const deleteLancamento = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string() }).parse(input))
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+  .handler(async ({ data }) => {
+    const supabase = await db();
+    const { error } = await supabase
       .from("lancamentos")
       .delete()
       .eq("id", data.id);
@@ -49,9 +53,9 @@ export const deleteLancamento = createServerFn({ method: "POST" })
   });
 
 export const getGastosFixos = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+  .handler(async () => {
+    const supabase = await db();
+    const { data, error } = await supabase
       .from("gastos_fixos")
       .select("*")
       .order("data", { ascending: false });
@@ -60,7 +64,6 @@ export const getGastosFixos = createServerFn({ method: "GET" })
   });
 
 export const addGastoFixo = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z
       .object({
@@ -70,20 +73,21 @@ export const addGastoFixo = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data }) => {
+    const supabase = await db();
     const mesAno = `${data.data.slice(5, 7)}/${data.data.slice(0, 4)}`;
-    const { error } = await context.supabase
+    const { error } = await supabase
       .from("gastos_fixos")
-      .insert({ ...data, mes_ano: mesAno, user_id: context.userId });
+      .insert({ ...data, mes_ano: mesAno });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const deleteGastoFixo = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string() }).parse(input))
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+  .handler(async ({ data }) => {
+    const supabase = await db();
+    const { error } = await supabase
       .from("gastos_fixos")
       .delete()
       .eq("id", data.id);
@@ -92,14 +96,14 @@ export const deleteGastoFixo = createServerFn({ method: "POST" })
   });
 
 export const getEmprestimos = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data: emprestimos, error } = await context.supabase
+  .handler(async () => {
+    const supabase = await db();
+    const { data: emprestimos, error } = await supabase
       .from("emprestimos")
       .select("*")
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
-    const { data: pagamentos, error: e2 } = await context.supabase
+    const { data: pagamentos, error: e2 } = await supabase
       .from("pagamentos")
       .select("*")
       .order("data", { ascending: false });
@@ -108,7 +112,6 @@ export const getEmprestimos = createServerFn({ method: "GET" })
   });
 
 export const addEmprestimo = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z
       .object({
@@ -118,19 +121,18 @@ export const addEmprestimo = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("emprestimos").insert({
+  .handler(async ({ data }) => {
+    const supabase = await db();
+    const { error } = await supabase.from("emprestimos").insert({
       ...data,
       total_pago: 0,
       saldo_devedor: data.valor_original,
-      user_id: context.userId,
     });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const addPagamento = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z
       .object({
@@ -141,11 +143,11 @@ export const addPagamento = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+  .handler(async ({ data }) => {
+    const supabase = await db();
     const { error } = await supabase
       .from("pagamentos")
-      .insert({ ...data, user_id: userId });
+      .insert({ ...data });
     if (error) throw new Error(error.message);
     const { data: emp, error: e2 } = await supabase
       .from("emprestimos")
@@ -166,9 +168,8 @@ export const addPagamento = createServerFn({ method: "POST" })
   });
 
 export const importSeedData = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabase, userId } = context;
+  .handler(async () => {
+    const supabase = await db();
     const { count } = await supabase
       .from("lancamentos")
       .select("id", { count: "exact", head: true });
@@ -193,13 +194,13 @@ export const importSeedData = createServerFn({ method: "POST" })
     for (const batch of chunk(seed.lancamentos, 200)) {
       const { error } = await supabase
         .from("lancamentos")
-        .insert(batch.map((r) => ({ ...r, user_id: userId })));
+        .insert(batch.map((r) => ({ ...r })));
       if (error) throw new Error(error.message);
     }
     for (const batch of chunk(seed.gastos_fixos, 200)) {
       const { error } = await supabase
         .from("gastos_fixos")
-        .insert(batch.map((r) => ({ ...r, user_id: userId })));
+        .insert(batch.map((r) => ({ ...r })));
       if (error) throw new Error(error.message);
     }
     const idMap = new Map<number, string>();
@@ -207,7 +208,7 @@ export const importSeedData = createServerFn({ method: "POST" })
       const { orig_id, ...rest } = e;
       const { data: inserted, error } = await supabase
         .from("emprestimos")
-        .insert({ ...rest, user_id: userId })
+        .insert({ ...rest })
         .select("id")
         .single();
       if (error) throw new Error(error.message);
@@ -217,7 +218,7 @@ export const importSeedData = createServerFn({ method: "POST" })
       const rows = batch.flatMap((p) => {
         const { emp_orig_id, ...rest } = p;
         const empId = idMap.get(emp_orig_id);
-        return empId ? [{ ...rest, emprestimo_id: empId, user_id: userId }] : [];
+        return empId ? [{ ...rest, emprestimo_id: empId }] : [];
       });
       if (rows.length) {
         const { error } = await supabase.from("pagamentos").insert(rows);

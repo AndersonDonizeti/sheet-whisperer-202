@@ -10,109 +10,80 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedEmprestimosRouteImport } from './routes/_authenticated/emprestimos'
-import { Route as AuthenticatedGastosFixosRouteImport } from './routes/_authenticated/gastos-fixos'
-import { Route as AuthenticatedLancamentosRouteImport } from './routes/_authenticated/lancamentos'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as EmprestimosRouteImport } from './routes/emprestimos'
+import { Route as GastosFixosRouteImport } from './routes/gastos-fixos'
+import { Route as LancamentosRouteImport } from './routes/lancamentos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedEmprestimosRoute =
-  AuthenticatedEmprestimosRouteImport.update({
-    id: '/emprestimos',
-    path: '/emprestimos',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedGastosFixosRoute =
-  AuthenticatedGastosFixosRouteImport.update({
-    id: '/gastos-fixos',
-    path: '/gastos-fixos',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedLancamentosRoute =
-  AuthenticatedLancamentosRouteImport.update({
-    id: '/lancamentos',
-    path: '/lancamentos',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
+const EmprestimosRoute = EmprestimosRouteImport.update({
+  id: '/emprestimos',
+  path: '/emprestimos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GastosFixosRoute = GastosFixosRouteImport.update({
+  id: '/gastos-fixos',
+  path: '/gastos-fixos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LancamentosRoute = LancamentosRouteImport.update({
+  id: '/lancamentos',
+  path: '/lancamentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/emprestimos': typeof AuthenticatedEmprestimosRoute
-  '/gastos-fixos': typeof AuthenticatedGastosFixosRoute
-  '/lancamentos': typeof AuthenticatedLancamentosRoute
+  '/dashboard': typeof DashboardRoute
+  '/emprestimos': typeof EmprestimosRoute
+  '/gastos-fixos': typeof GastosFixosRoute
+  '/lancamentos': typeof LancamentosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/emprestimos': typeof AuthenticatedEmprestimosRoute
-  '/gastos-fixos': typeof AuthenticatedGastosFixosRoute
-  '/lancamentos': typeof AuthenticatedLancamentosRoute
+  '/dashboard': typeof DashboardRoute
+  '/emprestimos': typeof EmprestimosRoute
+  '/gastos-fixos': typeof GastosFixosRoute
+  '/lancamentos': typeof LancamentosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
-  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/emprestimos': typeof AuthenticatedEmprestimosRoute
-  '/_authenticated/gastos-fixos': typeof AuthenticatedGastosFixosRoute
-  '/_authenticated/lancamentos': typeof AuthenticatedLancamentosRoute
+  '/dashboard': typeof DashboardRoute
+  '/emprestimos': typeof EmprestimosRoute
+  '/gastos-fixos': typeof GastosFixosRoute
+  '/lancamentos': typeof LancamentosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/auth'
-    | '/dashboard'
-    | '/emprestimos'
-    | '/gastos-fixos'
-    | '/lancamentos'
+    '/' | '/dashboard' | '/emprestimos' | '/gastos-fixos' | '/lancamentos'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/auth'
-    | '/dashboard'
-    | '/emprestimos'
-    | '/gastos-fixos'
-    | '/lancamentos'
+  to: '/' | '/dashboard' | '/emprestimos' | '/gastos-fixos' | '/lancamentos'
   id:
     | '__root__'
     | '/'
-    | '/_authenticated'
-    | '/auth'
-    | '/_authenticated/dashboard'
-    | '/_authenticated/emprestimos'
-    | '/_authenticated/gastos-fixos'
-    | '/_authenticated/lancamentos'
+    | '/dashboard'
+    | '/emprestimos'
+    | '/gastos-fixos'
+    | '/lancamentos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  DashboardRoute: typeof DashboardRoute
+  EmprestimosRoute: typeof EmprestimosRoute
+  GastosFixosRoute: typeof GastosFixosRoute
+  LancamentosRoute: typeof LancamentosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -124,72 +95,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
+    '/dashboard': {
+      id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/emprestimos': {
-      id: '/_authenticated/emprestimos'
+    '/emprestimos': {
+      id: '/emprestimos'
       path: '/emprestimos'
       fullPath: '/emprestimos'
-      preLoaderRoute: typeof AuthenticatedEmprestimosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      preLoaderRoute: typeof EmprestimosRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/gastos-fixos': {
-      id: '/_authenticated/gastos-fixos'
+    '/gastos-fixos': {
+      id: '/gastos-fixos'
       path: '/gastos-fixos'
       fullPath: '/gastos-fixos'
-      preLoaderRoute: typeof AuthenticatedGastosFixosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      preLoaderRoute: typeof GastosFixosRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/lancamentos': {
-      id: '/_authenticated/lancamentos'
+    '/lancamentos': {
+      id: '/lancamentos'
       path: '/lancamentos'
       fullPath: '/lancamentos'
-      preLoaderRoute: typeof AuthenticatedLancamentosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      preLoaderRoute: typeof LancamentosRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface AuthenticatedRouteRouteChildren {
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedEmprestimosRoute: typeof AuthenticatedEmprestimosRoute
-  AuthenticatedGastosFixosRoute: typeof AuthenticatedGastosFixosRoute
-  AuthenticatedLancamentosRoute: typeof AuthenticatedLancamentosRoute
-}
-
-const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedEmprestimosRoute: AuthenticatedEmprestimosRoute,
-  AuthenticatedGastosFixosRoute: AuthenticatedGastosFixosRoute,
-  AuthenticatedLancamentosRoute: AuthenticatedLancamentosRoute,
-}
-
-const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  DashboardRoute: DashboardRoute,
+  EmprestimosRoute: EmprestimosRoute,
+  GastosFixosRoute: GastosFixosRoute,
+  LancamentosRoute: LancamentosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
