@@ -7,7 +7,7 @@ import { AppShell } from "@/components/app-shell";
 import { getLancamentos, addLancamento, deleteLancamento } from "@/lib/financeiro.functions";
 import { brl, formatData, mesAno } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/lancamentos")({
+export const Route = createFileRoute("/lancamentos")({
   head: () => ({ meta: [{ title: "Lançamentos — Meu Controle Financeiro" }] }),
   component: Lancamentos,
 });
