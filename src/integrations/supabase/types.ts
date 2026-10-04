@@ -22,7 +22,7 @@ export type Database = {
           id: string
           saldo_devedor: number
           total_pago: number | null
-          user_id: string
+          user_id: string | null
           valor_original: number
         }
         Insert: {
@@ -32,7 +32,7 @@ export type Database = {
           id?: string
           saldo_devedor: number
           total_pago?: number | null
-          user_id: string
+          user_id?: string | null
           valor_original: number
         }
         Update: {
@@ -42,7 +42,7 @@ export type Database = {
           id?: string
           saldo_devedor?: number
           total_pago?: number | null
-          user_id?: string
+          user_id?: string | null
           valor_original?: number
         }
         Relationships: []
@@ -54,7 +54,7 @@ export type Database = {
           data: string
           id: string
           mes_ano: string | null
-          user_id: string
+          user_id: string | null
           valor: number
         }
         Insert: {
@@ -63,7 +63,7 @@ export type Database = {
           data: string
           id?: string
           mes_ano?: string | null
-          user_id: string
+          user_id?: string | null
           valor: number
         }
         Update: {
@@ -72,7 +72,7 @@ export type Database = {
           data?: string
           id?: string
           mes_ano?: string | null
-          user_id?: string
+          user_id?: string | null
           valor?: number
         }
         Relationships: []
@@ -87,7 +87,7 @@ export type Database = {
           obs: string | null
           plataforma: string | null
           tipo: string
-          user_id: string
+          user_id: string | null
           valor: number
         }
         Insert: {
@@ -99,7 +99,7 @@ export type Database = {
           obs?: string | null
           plataforma?: string | null
           tipo: string
-          user_id: string
+          user_id?: string | null
           valor: number
         }
         Update: {
@@ -111,7 +111,7 @@ export type Database = {
           obs?: string | null
           plataforma?: string | null
           tipo?: string
-          user_id?: string
+          user_id?: string | null
           valor?: number
         }
         Relationships: []
@@ -123,7 +123,7 @@ export type Database = {
           emprestimo_id: string
           id: string
           obs: string | null
-          user_id: string
+          user_id: string | null
           valor: number
         }
         Insert: {
@@ -132,7 +132,7 @@ export type Database = {
           emprestimo_id: string
           id?: string
           obs?: string | null
-          user_id: string
+          user_id?: string | null
           valor: number
         }
         Update: {
@@ -141,7 +141,7 @@ export type Database = {
           emprestimo_id?: string
           id?: string
           obs?: string | null
-          user_id?: string
+          user_id?: string | null
           valor?: number
         }
         Relationships: [
