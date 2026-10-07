@@ -95,6 +95,42 @@ export const deleteGastoFixo = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const getCategoriasGastos = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const supabase = await db();
+    const { data, error } = await supabase
+      .from("categorias_gastos")
+      .select("*")
+      .order("nome", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const addCategoriaGasto = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z.object({ nome: z.string().trim().min(1) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const supabase = await db();
+    const { error } = await supabase
+      .from("categorias_gastos")
+      .insert({ nome: data.nome });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteCategoriaGasto = createServerFn({ method: "POST" })
+  .inputValidator((input) => z.object({ id: z.string() }).parse(input))
+  .handler(async ({ data }) => {
+    const supabase = await db();
+    const { error } = await supabase
+      .from("categorias_gastos")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const getEmprestimos = createServerFn({ method: "GET" })
   .handler(async () => {
     const supabase = await db();
