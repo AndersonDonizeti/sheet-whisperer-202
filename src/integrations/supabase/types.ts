@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      categorias_gastos: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       emprestimos: {
         Row: {
           created_at: string | null
