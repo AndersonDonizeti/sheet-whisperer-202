@@ -7,7 +7,7 @@ import { getLancamentos, getGastosFixos, getEmprestimos, importSeedData } from "
 import { brl, MESES } from "@/lib/format";
 import { resumoMensal } from "@/lib/resumo";
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Início — Meu Controle Financeiro" }] }),
   component: Dashboard,
 });
