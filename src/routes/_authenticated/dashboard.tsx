@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { getLancamentos, getGastosFixos, getEmprestimos, importSeedData } from "@/lib/financeiro.functions";
+import { getLancamentos, getGastosFixos, getEmprestimos, importSeedData, claimLegacyData } from "@/lib/financeiro.functions";
 import { brl, MESES } from "@/lib/format";
 import { resumoMensal } from "@/lib/resumo";
 
@@ -18,6 +18,7 @@ function Dashboard() {
   const fetchG = useServerFn(getGastosFixos);
   const fetchE = useServerFn(getEmprestimos);
   const doImport = useServerFn(importSeedData);
+  const doClaim = useServerFn(claimLegacyData);
   const lanc = useQuery({ queryKey: ["lancamentos"], queryFn: () => fetchL() });
   const gastos = useQuery({ queryKey: ["gastos"], queryFn: () => fetchG() });
   const emp = useQuery({ queryKey: ["emprestimos"], queryFn: () => fetchE() });
@@ -25,6 +26,21 @@ function Dashboard() {
     mutationFn: () => doImport(),
     onSuccess: () => qc.invalidateQueries(),
   });
+  const claim = useMutation({
+    mutationFn: () => doClaim(),
+    onSuccess: (res) => {
+      if (res.claimed) qc.invalidateQueries();
+    },
+  });
+  const vazio = !lanc.isLoading && !lanc.error && (lanc.data ?? []).length === 0;
+  const [claimFeito, setClaimFeito] = useState(false);
+  useEffect(() => {
+    if (vazio && !claimFeito) {
+      setClaimFeito(true);
+      claim.mutate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vazio, claimFeito]);
 
   const anos = useMemo(() => {
     const s = new Set((lanc.data ?? []).map((l) => l.data.slice(0, 4)));
@@ -42,22 +58,28 @@ function Dashboard() {
     return <AppShell title="Início"><p className="text-muted-foreground">Carregando...</p></AppShell>;
   }
 
-  if ((lanc.data ?? []).length === 0) {
+  if (vazio) {
     return (
       <AppShell title="Início">
         <div className="rounded-2xl border border-border bg-card p-6 text-center">
           <h2 className="text-lg font-semibold">Bem-vindo!</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Importe o histórico da sua planilha (594 lançamentos, gastos fixos e empréstimos) com um clique.
-          </p>
-          <button
-            onClick={() => importar.mutate()}
-            disabled={importar.isPending}
-            className="mt-5 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-          >
-            {importar.isPending ? "Importando..." : "Importar dados da planilha"}
-          </button>
-          {importar.error && <p className="mt-3 text-sm text-expense">{importar.error.message}</p>}
+          {claim.isPending ? (
+            <p className="mt-2 text-sm text-muted-foreground">Verificando seus dados...</p>
+          ) : (
+            <>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Importe o histórico da sua planilha (594 lançamentos, gastos fixos e empréstimos) com um clique.
+              </p>
+              <button
+                onClick={() => importar.mutate()}
+                disabled={importar.isPending}
+                className="mt-5 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                {importar.isPending ? "Importando..." : "Importar dados da planilha"}
+              </button>
+              {importar.error && <p className="mt-3 text-sm text-expense">{importar.error.message}</p>}
+            </>
+          )}
         </div>
       </AppShell>
     );

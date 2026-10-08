@@ -1,6 +1,8 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, ArrowLeftRight, Home, HandCoins, Wallet } from "lucide-react";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { LayoutDashboard, ArrowLeftRight, Home, HandCoins, Wallet, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const tabs = [
   { to: "/dashboard", label: "Início", icon: LayoutDashboard },
@@ -11,6 +13,15 @@ const tabs = [
 
 export function AppShell({ children, title }: { children: ReactNode; title: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  async function handleSair() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
 
 
   return (
@@ -23,6 +34,14 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
             </div>
             <h1 className="text-lg font-bold">{title}</h1>
           </div>
+          <button
+            onClick={handleSair}
+            title="Sair"
+            aria-label="Sair"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </header>
 
