@@ -14,7 +14,7 @@ import {
 } from "@/lib/financeiro.functions";
 import { brl, formatData, mesAno } from "@/lib/format";
 
-export const Route = createFileRoute("/gastos-fixos")({
+export const Route = createFileRoute("/_authenticated/gastos-fixos")({
   head: () => ({ meta: [{ title: "Gastos Fixos — Meu Controle Financeiro" }] }),
   component: GastosFixos,
 });
