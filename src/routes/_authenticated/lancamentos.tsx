@@ -125,6 +125,16 @@ function Lancamentos() {
         </button>
       </form>
 
+      {consumo && (
+        <div className="mt-3 rounded-2xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Consumo médio do carro</p>
+          <p className="mt-0.5 text-2xl font-bold text-primary">{consumo.kml.toFixed(1)} km/L</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {consumo.kmRodados.toLocaleString("pt-BR")} km rodados · {consumo.litrosTotal.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} L abastecidos
+          </p>
+        </div>
+      )}
+
       <div className="mb-3 mt-6 flex items-center justify-between gap-2">
         <select value={mesFiltro} onChange={(e) => setFiltro(e.target.value)} className="rounded-lg border border-input bg-card px-3 py-2 text-sm">
           {mesesDisp.map((m) => <option key={m}>{m}</option>)}
