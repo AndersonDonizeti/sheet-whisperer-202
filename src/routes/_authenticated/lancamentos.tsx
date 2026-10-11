@@ -151,7 +151,11 @@ function Lancamentos() {
           <div key={l.id} className="flex items-center justify-between gap-2 px-3 py-2.5">
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{l.descricao || l.categoria}</p>
-              <p className="text-xs text-muted-foreground">{formatData(l.data)} · {l.categoria}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatData(l.data)} · {l.categoria}
+                {l.litros != null && ` · ${Number(l.litros).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} L`}
+                {l.odometro != null && ` · ${Number(l.odometro).toLocaleString("pt-BR")} km`}
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <span className={`text-sm font-semibold ${l.tipo === "Receita" ? "text-income" : "text-expense"}`}>
