@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { getEmprestimos, addEmprestimo, addPagamento } from "@/lib/financeiro.functions";
-import { brl, formatData } from "@/lib/format";
+import { brl, formatData, mascaraMoeda, parseMoeda } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/emprestimos")({
   head: () => ({ meta: [{ title: "Empréstimos — Meu Controle Financeiro" }] }),

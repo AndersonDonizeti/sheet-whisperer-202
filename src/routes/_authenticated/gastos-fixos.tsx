@@ -65,6 +65,23 @@ function GastosFixos() {
   const pagas = new Set(doMes.map((g) => g.categoria.toLowerCase()));
   const total = doMes.reduce((s, g) => s + Number(g.valor), 0);
 
+  // Projeção do próximo mês: média de cada conta nos últimos 3 meses em que foi paga
+  const projecao = useMemo(() => {
+    const prox = new Date(); prox.setDate(1); prox.setMonth(prox.getMonth() + 1);
+    const label = `${String(prox.getMonth() + 1).padStart(2, "0")}/${prox.getFullYear()}`;
+    const itens = categorias.map((c) => {
+      const porMes = new Map<string, number>();
+      for (const g of data) if (g.categoria.toLowerCase() === c.nome.toLowerCase()) {
+        const k = g.data.slice(0, 7); porMes.set(k, (porMes.get(k) ?? 0) + Number(g.valor));
+      }
+      const ult = [...porMes.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 3);
+      const media = ult.length ? ult.reduce((s, [, v]) => s + v, 0) / ult.length : 0;
+      return { nome: c.nome, media };
+    }).filter((i) => i.media > 0);
+    return { label, itens, total: itens.reduce((s, i) => s + i.media, 0) };
+  }, [data, categorias]);
+  const [verProj, setVerProj] = useState(false);
+
   return (
     <AppShell title="Gastos Fixos">
       <div className="mb-3 flex items-center justify-between">
@@ -73,6 +90,19 @@ function GastosFixos() {
         </select>
         <p className="text-sm">Total pago: <span className="font-semibold text-expense">{brl(total)}</span></p>
       </div>
+
+      <button onClick={() => setVerProj((v) => !v)} className="mb-3 w-full rounded-2xl border border-border bg-card p-4 text-left">
+        <p className="text-xs text-muted-foreground">Projeção para {projecao.label}</p>
+        <p className="mt-0.5 text-2xl font-bold text-primary">{brl(projecao.total)}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Média dos últimos 3 pagamentos de cada conta · {verProj ? "ocultar" : "ver detalhes"}</p>
+        {verProj && (
+          <div className="mt-2 border-t border-border pt-2">
+            {projecao.itens.map((i) => (
+              <div key={i.nome} className="flex justify-between py-1 text-sm"><span>{i.nome}</span><span>{brl(i.media)}</span></div>
+            ))}
+          </div>
+        )}
+      </button>
 
       <div className="mb-2 flex items-center justify-between">
         <p className="text-xs text-muted-foreground">Contas do mês</p>
