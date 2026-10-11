@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { getLancamentos, addLancamento, deleteLancamento } from "@/lib/financeiro.functions";
-import { brl, formatData, mesAno } from "@/lib/format";
+import { brl, formatData, mesAno, mascaraMoeda, parseMoeda } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/lancamentos")({
   head: () => ({ meta: [{ title: "Lançamentos — Meu Controle Financeiro" }] }),
@@ -42,7 +42,7 @@ function Lancamentos() {
           tipo,
           categoria: tipo === "Receita" ? "Corrida" : categoria,
           descricao: tipo === "Receita" ? plataforma : descricao || (isCombustivel ? combustivel : categoria),
-          valor: Number(valor.replace(",", ".")),
+          valor: parseMoeda(valor),
           plataforma: tipo === "Receita" ? plataforma : "",
           obs: "",
           combustivel: isCombustivel ? combustivel : null,
@@ -80,7 +80,7 @@ function Lancamentos() {
   return (
     <AppShell title="Lançamentos">
       <form
-        onSubmit={(e) => { e.preventDefault(); if (Number(valor.replace(",", ".")) > 0) addM.mutate(); }}
+        onSubmit={(e) => { e.preventDefault(); if (parseMoeda(valor) > 0) addM.mutate(); }}
         className="rounded-2xl border border-border bg-card p-4"
       >
         <div className="mb-3 grid grid-cols-2 gap-2">
@@ -118,7 +118,7 @@ function Lancamentos() {
               <input inputMode="numeric" placeholder="Odômetro (km)" value={odometro} onChange={(e) => setOdometro(e.target.value)} className={`${inputCls} col-span-2`} />
             </>
           )}
-          <input inputMode="decimal" placeholder="Valor R$" value={valor} onChange={(e) => setValor(e.target.value)} className={`${inputCls} col-span-2 text-lg`} required />
+          <input inputMode="numeric" placeholder="Valor R$ (ex: 1250 = 12,50)" value={valor} onChange={(e) => setValor(mascaraMoeda(e.target.value))} className={`${inputCls} col-span-2 text-lg`} required />
         </div>
         <button type="submit" disabled={addM.isPending} className="mt-3 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50">
           {addM.isPending ? "Salvando..." : "Adicionar"}

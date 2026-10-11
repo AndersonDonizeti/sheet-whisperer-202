@@ -31,11 +31,11 @@ function Emprestimos() {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["emprestimos"] });
   const novoM = useMutation({
-    mutationFn: () => addE({ data: { descricao: desc, credor, valor_original: Number(valorOrig.replace(",", ".")) } }),
+    mutationFn: () => addE({ data: { descricao: desc, credor, valor_original: parseMoeda(valorOrig) } }),
     onSuccess: () => { setNovo(false); setDesc(""); setCredor(""); setValorOrig(""); invalidate(); },
   });
   const pagM = useMutation({
-    mutationFn: (id: string) => addP({ data: { emprestimo_id: id, data: new Date().toISOString().slice(0, 10), valor: Number(valorPag.replace(",", ".")), obs: "" } }),
+    mutationFn: (id: string) => addP({ data: { emprestimo_id: id, data: new Date().toISOString().slice(0, 10), valor: parseMoeda(valorPag), obs: "" } }),
     onSuccess: () => { setValorPag(""); invalidate(); },
   });
 
@@ -63,7 +63,7 @@ function Emprestimos() {
         <form onSubmit={(e) => { e.preventDefault(); novoM.mutate(); }} className="mt-2 flex flex-col gap-2 rounded-xl border border-border bg-card p-3">
           <input required placeholder="Descrição" value={desc} onChange={(e) => setDesc(e.target.value)} className={inputCls} />
           <input required placeholder="Credor" value={credor} onChange={(e) => setCredor(e.target.value)} className={inputCls} />
-          <input required inputMode="decimal" placeholder="Valor R$" value={valorOrig} onChange={(e) => setValorOrig(e.target.value)} className={inputCls} />
+          <input required inputMode="numeric" placeholder="Valor R$" value={valorOrig} onChange={(e) => setValorOrig(mascaraMoeda(e.target.value))} className={inputCls} />
           <button className="rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground">Salvar</button>
         </form>
       )}
@@ -96,8 +96,8 @@ function Emprestimos() {
               {aberto === e.id && (
                 <div className="mt-3 border-t border-border pt-3">
                   {!quitado && (
-                    <form onSubmit={(ev) => { ev.preventDefault(); if (Number(valorPag.replace(",", ".")) > 0) pagM.mutate(e.id); }} className="flex gap-2">
-                      <input inputMode="decimal" placeholder="Valor pago hoje" value={valorPag} onChange={(ev) => setValorPag(ev.target.value)} className={inputCls} />
+                    <form onSubmit={(ev) => { ev.preventDefault(); if (parseMoeda(valorPag) > 0) pagM.mutate(e.id); }} className="flex gap-2">
+                      <input inputMode="numeric" placeholder="Valor pago hoje" value={valorPag} onChange={(ev) => setValorPag(mascaraMoeda(ev.target.value))} className={inputCls} />
                       <button disabled={pagM.isPending} className="shrink-0 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50">Pagar</button>
                     </form>
                   )}

@@ -12,7 +12,7 @@ import {
   addCategoriaGasto,
   deleteCategoriaGasto,
 } from "@/lib/financeiro.functions";
-import { brl, formatData, mesAno } from "@/lib/format";
+import { brl, formatData, mesAno, mascaraMoeda, parseMoeda } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/gastos-fixos")({
   head: () => ({ meta: [{ title: "Gastos Fixos — Meu Controle Financeiro" }] }),
@@ -42,7 +42,7 @@ function GastosFixos() {
   const catSel = categoria || categorias[0]?.nome || "";
 
   const addM = useMutation({
-    mutationFn: () => add({ data: { data: dataG, categoria: catSel, valor: Number(valor.replace(",", ".")) } }),
+    mutationFn: () => add({ data: { data: dataG, categoria: catSel, valor: parseMoeda(valor) } }),
     onSuccess: () => { setValor(""); qc.invalidateQueries({ queryKey: ["gastos"] }); },
   });
   const delM = useMutation({
@@ -136,14 +136,14 @@ function GastosFixos() {
         })}
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); if (catSel && Number(valor.replace(",", ".")) > 0) addM.mutate(); }} className="rounded-2xl border border-border bg-card p-4">
+      <form onSubmit={(e) => { e.preventDefault(); if (catSel && parseMoeda(valor) > 0) addM.mutate(); }} className="rounded-2xl border border-border bg-card p-4">
         <p className="mb-2 text-sm font-medium">Registrar conta paga</p>
         <div className="grid grid-cols-2 gap-2">
           <select value={catSel} onChange={(e) => setCategoria(e.target.value)} className={inputCls}>
             {categorias.map((c) => <option key={c.id} value={c.nome}>{c.nome}</option>)}
           </select>
           <input type="date" value={dataG} onChange={(e) => setDataG(e.target.value)} className={inputCls} />
-          <input inputMode="decimal" placeholder="Valor R$" value={valor} onChange={(e) => setValor(e.target.value)} className={`${inputCls} col-span-2`} required />
+          <input inputMode="numeric" placeholder="Valor R$ (ex: 1250 = 12,50)" value={valor} onChange={(e) => setValor(mascaraMoeda(e.target.value))} className={`${inputCls} col-span-2`} required />
         </div>
         <button type="submit" disabled={addM.isPending || categorias.length === 0} className="mt-3 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50">
           {addM.isPending ? "Salvando..." : "Registrar pagamento"}
