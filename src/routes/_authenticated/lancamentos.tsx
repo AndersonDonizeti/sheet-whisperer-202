@@ -106,8 +106,17 @@ function Lancamentos() {
             </select>
           )}
           <input type="date" value={dataL} onChange={(e) => setDataL(e.target.value)} className={inputCls} />
-          {tipo === "Despesa" && (
+          {tipo === "Despesa" && !isCombustivel && (
             <input placeholder="Descrição (ex: Etanol)" value={descricao} onChange={(e) => setDescricao(e.target.value)} className={`${inputCls} col-span-2`} />
+          )}
+          {isCombustivel && (
+            <>
+              <select value={combustivel} onChange={(e) => setCombustivel(e.target.value)} className={inputCls}>
+                <option>Etanol</option><option>Gasolina</option><option>Gasolina Aditivada</option><option>GNV</option><option>Diesel</option>
+              </select>
+              <input inputMode="decimal" placeholder="Litros" value={litros} onChange={(e) => setLitros(e.target.value)} className={inputCls} />
+              <input inputMode="numeric" placeholder="Odômetro (km)" value={odometro} onChange={(e) => setOdometro(e.target.value)} className={`${inputCls} col-span-2`} />
+            </>
           )}
           <input inputMode="decimal" placeholder="Valor R$" value={valor} onChange={(e) => setValor(e.target.value)} className={`${inputCls} col-span-2 text-lg`} required />
         </div>
