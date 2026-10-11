@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { getLancamentos, addLancamento, deleteLancamento } from "@/lib/financeiro.functions";
-import { brl, formatData, mesAno } from "@/lib/format";
+import { brl, formatData, mesAno, mascaraMoeda, parseMoeda } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/lancamentos")({
   head: () => ({ meta: [{ title: "Lançamentos — Meu Controle Financeiro" }] }),
@@ -42,7 +42,7 @@ function Lancamentos() {
           tipo,
           categoria: tipo === "Receita" ? "Corrida" : categoria,
           descricao: tipo === "Receita" ? plataforma : descricao || (isCombustivel ? combustivel : categoria),
-          valor: Number(valor.replace(",", ".")),
+          valor: parseMoeda(valor),
           plataforma: tipo === "Receita" ? plataforma : "",
           obs: "",
           combustivel: isCombustivel ? combustivel : null,
@@ -64,23 +64,32 @@ function Lancamentos() {
   const rec = lista.filter((l) => l.tipo === "Receita").reduce((s, l) => s + Number(l.valor), 0);
   const desp = lista.filter((l) => l.tipo === "Despesa").reduce((s, l) => s + Number(l.valor), 0);
 
-  // Consumo do carro: km rodados entre abastecimentos ÷ litros do período
+  // Consumo: km entre um abastecimento e o anterior ÷ litros desse abastecimento, agrupado por mês
   const consumo = useMemo(() => {
     const abs = data
       .filter((l) => l.categoria === "Combustível" && l.litros != null && l.odometro != null)
-      .sort((a, b) => a.data.localeCompare(b.data));
-    if (abs.length < 2) return null;
-    const odos = abs.map((l) => Number(l.odometro));
-    const kmRodados = Math.max(...odos) - Math.min(...odos);
-    const litrosTotal = abs.reduce((s, l) => s + Number(l.litros), 0);
-    if (kmRodados <= 0 || litrosTotal <= 0) return null;
-    return { kml: kmRodados / litrosTotal, kmRodados, litrosTotal };
+      .sort((a, b) => a.data.localeCompare(b.data) || Number(a.odometro) - Number(b.odometro));
+    const ano = String(new Date().getFullYear());
+    const meses = new Map<string, { km: number; litros: number }>();
+    const acum = { km: 0, litros: 0 };
+    for (let i = 1; i < abs.length; i++) {
+      const km = Number(abs[i]!.odometro) - Number(abs[i - 1]!.odometro);
+      const lt = Number(abs[i]!.litros);
+      if (km <= 0 || lt <= 0) continue;
+      const m = mesAno(abs[i]!.data);
+      const cur = meses.get(m) ?? { km: 0, litros: 0 };
+      cur.km += km; cur.litros += lt; meses.set(m, cur);
+      if (abs[i]!.data.startsWith(ano)) { acum.km += km; acum.litros += lt; }
+    }
+    if (acum.litros <= 0 && meses.size === 0) return null;
+    const porMes = [...meses.entries()].reverse().map(([mes, v]) => ({ mes, ...v, kml: v.km / v.litros }));
+    return { ano, acum: acum.litros > 0 ? { ...acum, kml: acum.km / acum.litros } : null, porMes };
   }, [data]);
 
   return (
     <AppShell title="Lançamentos">
       <form
-        onSubmit={(e) => { e.preventDefault(); if (Number(valor.replace(",", ".")) > 0) addM.mutate(); }}
+        onSubmit={(e) => { e.preventDefault(); if (parseMoeda(valor) > 0) addM.mutate(); }}
         className="rounded-2xl border border-border bg-card p-4"
       >
         <div className="mb-3 grid grid-cols-2 gap-2">
@@ -118,7 +127,7 @@ function Lancamentos() {
               <input inputMode="numeric" placeholder="Odômetro (km)" value={odometro} onChange={(e) => setOdometro(e.target.value)} className={`${inputCls} col-span-2`} />
             </>
           )}
-          <input inputMode="decimal" placeholder="Valor R$" value={valor} onChange={(e) => setValor(e.target.value)} className={`${inputCls} col-span-2 text-lg`} required />
+          <input inputMode="numeric" placeholder="Valor R$ (ex: 1250 = 12,50)" value={valor} onChange={(e) => setValor(mascaraMoeda(e.target.value))} className={`${inputCls} col-span-2 text-lg`} required />
         </div>
         <button type="submit" disabled={addM.isPending} className="mt-3 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50">
           {addM.isPending ? "Salvando..." : "Adicionar"}
@@ -127,11 +136,26 @@ function Lancamentos() {
 
       {consumo && (
         <div className="mt-3 rounded-2xl border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Consumo médio do carro</p>
-          <p className="mt-0.5 text-2xl font-bold text-primary">{consumo.kml.toFixed(1)} km/L</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {consumo.kmRodados.toLocaleString("pt-BR")} km rodados · {consumo.litrosTotal.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} L abastecidos
-          </p>
+          <p className="text-xs text-muted-foreground">Consumo médio do carro — acumulado {consumo.ano}</p>
+          {consumo.acum ? (
+            <>
+              <p className="mt-0.5 text-2xl font-bold text-primary">{consumo.acum.kml.toFixed(1)} km/L</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {consumo.acum.km.toLocaleString("pt-BR")} km rodados · {consumo.acum.litros.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} L abastecidos
+              </p>
+            </>
+          ) : <p className="mt-1 text-sm text-muted-foreground">Sem dados neste ano.</p>}
+          {consumo.porMes.length > 0 && (
+            <div className="mt-3 border-t border-border pt-2">
+              <p className="mb-1 text-xs text-muted-foreground">Por mês</p>
+              {consumo.porMes.map((m) => (
+                <div key={m.mes} className="flex justify-between py-1 text-sm">
+                  <span>{m.mes}</span>
+                  <span className="text-muted-foreground">{m.km.toLocaleString("pt-BR")} km · <span className="font-semibold text-foreground">{m.kml.toFixed(1)} km/L</span></span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

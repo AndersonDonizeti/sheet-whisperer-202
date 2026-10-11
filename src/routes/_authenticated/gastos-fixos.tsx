@@ -12,7 +12,7 @@ import {
   addCategoriaGasto,
   deleteCategoriaGasto,
 } from "@/lib/financeiro.functions";
-import { brl, formatData, mesAno } from "@/lib/format";
+import { brl, formatData, mesAno, mascaraMoeda, parseMoeda } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/gastos-fixos")({
   head: () => ({ meta: [{ title: "Gastos Fixos — Meu Controle Financeiro" }] }),
@@ -42,7 +42,7 @@ function GastosFixos() {
   const catSel = categoria || categorias[0]?.nome || "";
 
   const addM = useMutation({
-    mutationFn: () => add({ data: { data: dataG, categoria: catSel, valor: Number(valor.replace(",", ".")) } }),
+    mutationFn: () => add({ data: { data: dataG, categoria: catSel, valor: parseMoeda(valor) } }),
     onSuccess: () => { setValor(""); qc.invalidateQueries({ queryKey: ["gastos"] }); },
   });
   const delM = useMutation({
@@ -65,6 +65,23 @@ function GastosFixos() {
   const pagas = new Set(doMes.map((g) => g.categoria.toLowerCase()));
   const total = doMes.reduce((s, g) => s + Number(g.valor), 0);
 
+  // Projeção do próximo mês: média de cada conta nos últimos 3 meses em que foi paga
+  const projecao = useMemo(() => {
+    const prox = new Date(); prox.setDate(1); prox.setMonth(prox.getMonth() + 1);
+    const label = `${String(prox.getMonth() + 1).padStart(2, "0")}/${prox.getFullYear()}`;
+    const itens = categorias.map((c) => {
+      const porMes = new Map<string, number>();
+      for (const g of data) if (g.categoria.toLowerCase() === c.nome.toLowerCase()) {
+        const k = g.data.slice(0, 7); porMes.set(k, (porMes.get(k) ?? 0) + Number(g.valor));
+      }
+      const ult = [...porMes.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 3);
+      const media = ult.length ? ult.reduce((s, [, v]) => s + v, 0) / ult.length : 0;
+      return { nome: c.nome, media };
+    }).filter((i) => i.media > 0);
+    return { label, itens, total: itens.reduce((s, i) => s + i.media, 0) };
+  }, [data, categorias]);
+  const [verProj, setVerProj] = useState(false);
+
   return (
     <AppShell title="Gastos Fixos">
       <div className="mb-3 flex items-center justify-between">
@@ -73,6 +90,19 @@ function GastosFixos() {
         </select>
         <p className="text-sm">Total pago: <span className="font-semibold text-expense">{brl(total)}</span></p>
       </div>
+
+      <button onClick={() => setVerProj((v) => !v)} className="mb-3 w-full rounded-2xl border border-border bg-card p-4 text-left">
+        <p className="text-xs text-muted-foreground">Projeção para {projecao.label}</p>
+        <p className="mt-0.5 text-2xl font-bold text-primary">{brl(projecao.total)}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Média dos últimos 3 pagamentos de cada conta · {verProj ? "ocultar" : "ver detalhes"}</p>
+        {verProj && (
+          <div className="mt-2 border-t border-border pt-2">
+            {projecao.itens.map((i) => (
+              <div key={i.nome} className="flex justify-between py-1 text-sm"><span>{i.nome}</span><span>{brl(i.media)}</span></div>
+            ))}
+          </div>
+        )}
+      </button>
 
       <div className="mb-2 flex items-center justify-between">
         <p className="text-xs text-muted-foreground">Contas do mês</p>
@@ -136,14 +166,14 @@ function GastosFixos() {
         })}
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); if (catSel && Number(valor.replace(",", ".")) > 0) addM.mutate(); }} className="rounded-2xl border border-border bg-card p-4">
+      <form onSubmit={(e) => { e.preventDefault(); if (catSel && parseMoeda(valor) > 0) addM.mutate(); }} className="rounded-2xl border border-border bg-card p-4">
         <p className="mb-2 text-sm font-medium">Registrar conta paga</p>
         <div className="grid grid-cols-2 gap-2">
           <select value={catSel} onChange={(e) => setCategoria(e.target.value)} className={inputCls}>
             {categorias.map((c) => <option key={c.id} value={c.nome}>{c.nome}</option>)}
           </select>
           <input type="date" value={dataG} onChange={(e) => setDataG(e.target.value)} className={inputCls} />
-          <input inputMode="decimal" placeholder="Valor R$" value={valor} onChange={(e) => setValor(e.target.value)} className={`${inputCls} col-span-2`} required />
+          <input inputMode="numeric" placeholder="Valor R$ (ex: 1250 = 12,50)" value={valor} onChange={(e) => setValor(mascaraMoeda(e.target.value))} className={`${inputCls} col-span-2`} required />
         </div>
         <button type="submit" disabled={addM.isPending || categorias.length === 0} className="mt-3 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50">
           {addM.isPending ? "Salvando..." : "Registrar pagamento"}
