@@ -28,6 +28,11 @@ function Lancamentos() {
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
   const [dataL, setDataL] = useState(hoje());
+  const [combustivel, setCombustivel] = useState("Etanol");
+  const [litros, setLitros] = useState("");
+  const [odometro, setOdometro] = useState("");
+
+  const isCombustivel = tipo === "Despesa" && categoria === "Combustível";
 
   const addM = useMutation({
     mutationFn: () =>
@@ -36,13 +41,16 @@ function Lancamentos() {
           data: dataL,
           tipo,
           categoria: tipo === "Receita" ? "Corrida" : categoria,
-          descricao: tipo === "Receita" ? plataforma : descricao || categoria,
+          descricao: tipo === "Receita" ? plataforma : descricao || (isCombustivel ? combustivel : categoria),
           valor: Number(valor.replace(",", ".")),
           plataforma: tipo === "Receita" ? plataforma : "",
           obs: "",
+          combustivel: isCombustivel ? combustivel : null,
+          litros: isCombustivel && litros ? Number(litros.replace(",", ".")) : null,
+          odometro: isCombustivel && odometro ? Number(odometro.replace(",", ".")) : null,
         },
       }),
-    onSuccess: () => { setValor(""); setDescricao(""); qc.invalidateQueries({ queryKey: ["lancamentos"] }); },
+    onSuccess: () => { setValor(""); setDescricao(""); setLitros(""); setOdometro(""); qc.invalidateQueries({ queryKey: ["lancamentos"] }); },
   });
   const delM = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
@@ -55,6 +63,19 @@ function Lancamentos() {
   const lista = data.filter((l) => mesAno(l.data) === mesFiltro);
   const rec = lista.filter((l) => l.tipo === "Receita").reduce((s, l) => s + Number(l.valor), 0);
   const desp = lista.filter((l) => l.tipo === "Despesa").reduce((s, l) => s + Number(l.valor), 0);
+
+  // Consumo do carro: km rodados entre abastecimentos ÷ litros do período
+  const consumo = useMemo(() => {
+    const abs = data
+      .filter((l) => l.categoria === "Combustível" && l.litros != null && l.odometro != null)
+      .sort((a, b) => a.data.localeCompare(b.data));
+    if (abs.length < 2) return null;
+    const odos = abs.map((l) => Number(l.odometro));
+    const kmRodados = Math.max(...odos) - Math.min(...odos);
+    const litrosTotal = abs.reduce((s, l) => s + Number(l.litros), 0);
+    if (kmRodados <= 0 || litrosTotal <= 0) return null;
+    return { kml: kmRodados / litrosTotal, kmRodados, litrosTotal };
+  }, [data]);
 
   return (
     <AppShell title="Lançamentos">
