@@ -101,11 +101,14 @@ export type Database = {
       lancamentos: {
         Row: {
           categoria: string
+          combustivel: string | null
           created_at: string | null
           data: string
           descricao: string | null
           id: string
+          litros: number | null
           obs: string | null
+          odometro: number | null
           plataforma: string | null
           tipo: string
           user_id: string | null
@@ -113,11 +116,14 @@ export type Database = {
         }
         Insert: {
           categoria: string
+          combustivel?: string | null
           created_at?: string | null
           data: string
           descricao?: string | null
           id?: string
+          litros?: number | null
           obs?: string | null
+          odometro?: number | null
           plataforma?: string | null
           tipo: string
           user_id?: string | null
@@ -125,11 +131,14 @@ export type Database = {
         }
         Update: {
           categoria?: string
+          combustivel?: string | null
           created_at?: string | null
           data?: string
           descricao?: string | null
           id?: string
+          litros?: number | null
           obs?: string | null
+          odometro?: number | null
           plataforma?: string | null
           tipo?: string
           user_id?: string | null

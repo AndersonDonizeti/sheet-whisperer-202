@@ -28,6 +28,11 @@ function Lancamentos() {
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
   const [dataL, setDataL] = useState(hoje());
+  const [combustivel, setCombustivel] = useState("Etanol");
+  const [litros, setLitros] = useState("");
+  const [odometro, setOdometro] = useState("");
+
+  const isCombustivel = tipo === "Despesa" && categoria === "Combustível";
 
   const addM = useMutation({
     mutationFn: () =>
@@ -36,13 +41,16 @@ function Lancamentos() {
           data: dataL,
           tipo,
           categoria: tipo === "Receita" ? "Corrida" : categoria,
-          descricao: tipo === "Receita" ? plataforma : descricao || categoria,
+          descricao: tipo === "Receita" ? plataforma : descricao || (isCombustivel ? combustivel : categoria),
           valor: Number(valor.replace(",", ".")),
           plataforma: tipo === "Receita" ? plataforma : "",
           obs: "",
+          combustivel: isCombustivel ? combustivel : null,
+          litros: isCombustivel && litros ? Number(litros.replace(",", ".")) : null,
+          odometro: isCombustivel && odometro ? Number(odometro.replace(",", ".")) : null,
         },
       }),
-    onSuccess: () => { setValor(""); setDescricao(""); qc.invalidateQueries({ queryKey: ["lancamentos"] }); },
+    onSuccess: () => { setValor(""); setDescricao(""); setLitros(""); setOdometro(""); qc.invalidateQueries({ queryKey: ["lancamentos"] }); },
   });
   const delM = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
@@ -55,6 +63,19 @@ function Lancamentos() {
   const lista = data.filter((l) => mesAno(l.data) === mesFiltro);
   const rec = lista.filter((l) => l.tipo === "Receita").reduce((s, l) => s + Number(l.valor), 0);
   const desp = lista.filter((l) => l.tipo === "Despesa").reduce((s, l) => s + Number(l.valor), 0);
+
+  // Consumo do carro: km rodados entre abastecimentos ÷ litros do período
+  const consumo = useMemo(() => {
+    const abs = data
+      .filter((l) => l.categoria === "Combustível" && l.litros != null && l.odometro != null)
+      .sort((a, b) => a.data.localeCompare(b.data));
+    if (abs.length < 2) return null;
+    const odos = abs.map((l) => Number(l.odometro));
+    const kmRodados = Math.max(...odos) - Math.min(...odos);
+    const litrosTotal = abs.reduce((s, l) => s + Number(l.litros), 0);
+    if (kmRodados <= 0 || litrosTotal <= 0) return null;
+    return { kml: kmRodados / litrosTotal, kmRodados, litrosTotal };
+  }, [data]);
 
   return (
     <AppShell title="Lançamentos">
@@ -85,8 +106,17 @@ function Lancamentos() {
             </select>
           )}
           <input type="date" value={dataL} onChange={(e) => setDataL(e.target.value)} className={inputCls} />
-          {tipo === "Despesa" && (
+          {tipo === "Despesa" && !isCombustivel && (
             <input placeholder="Descrição (ex: Etanol)" value={descricao} onChange={(e) => setDescricao(e.target.value)} className={`${inputCls} col-span-2`} />
+          )}
+          {isCombustivel && (
+            <>
+              <select value={combustivel} onChange={(e) => setCombustivel(e.target.value)} className={inputCls}>
+                <option>Etanol</option><option>Gasolina</option><option>Gasolina Aditivada</option><option>GNV</option><option>Diesel</option>
+              </select>
+              <input inputMode="decimal" placeholder="Litros" value={litros} onChange={(e) => setLitros(e.target.value)} className={inputCls} />
+              <input inputMode="numeric" placeholder="Odômetro (km)" value={odometro} onChange={(e) => setOdometro(e.target.value)} className={`${inputCls} col-span-2`} />
+            </>
           )}
           <input inputMode="decimal" placeholder="Valor R$" value={valor} onChange={(e) => setValor(e.target.value)} className={`${inputCls} col-span-2 text-lg`} required />
         </div>
@@ -94,6 +124,16 @@ function Lancamentos() {
           {addM.isPending ? "Salvando..." : "Adicionar"}
         </button>
       </form>
+
+      {consumo && (
+        <div className="mt-3 rounded-2xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Consumo médio do carro</p>
+          <p className="mt-0.5 text-2xl font-bold text-primary">{consumo.kml.toFixed(1)} km/L</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {consumo.kmRodados.toLocaleString("pt-BR")} km rodados · {consumo.litrosTotal.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} L abastecidos
+          </p>
+        </div>
+      )}
 
       <div className="mb-3 mt-6 flex items-center justify-between gap-2">
         <select value={mesFiltro} onChange={(e) => setFiltro(e.target.value)} className="rounded-lg border border-input bg-card px-3 py-2 text-sm">
@@ -111,7 +151,11 @@ function Lancamentos() {
           <div key={l.id} className="flex items-center justify-between gap-2 px-3 py-2.5">
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{l.descricao || l.categoria}</p>
-              <p className="text-xs text-muted-foreground">{formatData(l.data)} · {l.categoria}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatData(l.data)} · {l.categoria}
+                {l.litros != null && ` · ${Number(l.litros).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} L`}
+                {l.odometro != null && ` · ${Number(l.odometro).toLocaleString("pt-BR")} km`}
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <span className={`text-sm font-semibold ${l.tipo === "Receita" ? "text-income" : "text-expense"}`}>

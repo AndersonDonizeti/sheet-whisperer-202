@@ -29,6 +29,9 @@ export const addLancamento = createServerFn({ method: "POST" })
         valor: z.number().positive(),
         plataforma: z.string().default(""),
         obs: z.string().default(""),
+        combustivel: z.string().nullable().default(null),
+        litros: z.number().positive().nullable().default(null),
+        odometro: z.number().positive().nullable().default(null),
       })
       .parse(input),
   )
